@@ -1,0 +1,101 @@
+body {
+    background: linear-gradient(to bottom, #1a1a72, #4f86f7); /* Dark blue fading to light blue */
+    color: #fff; /* White text for strong contrast */
+    font-family: Arial, sans-serif;
+}
+h1, h2 {
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* Adds subtle depth */
+}
+h1 {
+    text-align: center;
+    font-size: 32px;
+    color: #fff; /* White text */
+    
+}
+h2 {
+    text-align: center;
+    text-decoration: underline
+}
+ol {
+    list-style: none;
+    padding-left: 0; /* Ensures uniform alignment */
+    width: fit-content; /* Prevents extra stretching */
+    margin: auto; /* Centers the list */
+    text-align: center;
+    display: flex; /* Aligns both lists side by side */
+    justify-content: center; /* Ensures proper spacing */
+    gap: 40px; /* Adds space between the two lists */
+}
+
+ol li {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px;
+}
+
+.column {
+    text-align: center;
+}
+
+img {
+    display: block;
+    margin: 20px auto;
+    width: 80%;
+    border-radius: 15px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.5);
+}
+iframe {
+    display: block;
+    margin: 20px auto;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.5);
+}
+#navigation {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+     display: flex;
+    justify-content: space-between;
+    width: 97.5%; /* Reducing width prevents cutting off edges */
+    padding: 10px;
+    margin: auto; /* Centers the navigation */
+}
+#navigation a {
+    display: block;
+    font-size: 16px;
+    color: #333; /* Adjust color as needed */
+    text-decoration: none;
+    font-weight: bold;
+}
+#navigation a {
+    background-color: #ffcc00; /* Gold for contrast */
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+}
+
+.nav-button {
+    background-color: #ffcc00;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    color: black;
+}
+
+.left {
+    margin-right: auto; /* Pushes to the left */
+}
+
+.right {
+    margin-left: auto; /* Pushes to the right */
+}
+.tableauPlaceholder {
+    width: 800px;
+    height: 800px; /* Ensure it stays square */
+    max-width: 90%;
+    max-height: 90%;
+    margin: 0 auto; /* Centers the chart */
+}

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Theatre Lyric Recall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3e8ff; /* Light lavender background */
+            color: #333;
+        }
+        .game-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 800px; /* Limit width */
+            margin: 2rem auto; /* Center container */
+        }
+        h1, h2 {
+            color: #6b21a8; /* Purple heading */
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: inline-block; /* Allow margin/padding */
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 0.5rem;
+            background-color: #a855f7; /* Purple button */
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            background-color: #9333ea; /* Darker purple on hover */
+        }
+        .btn.active {
+            background-color: #6b21a8; /* Even darker for active selection */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn.disabled {
+            background-color: #d8b4fe; /* Lighter purple when disabled */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        /* Hint button specific style */
+        .btn-hint {
+            background-color: #fbbf24; /* Amber color for hint */
+        }
+        .btn-hint:hover {
+            background-color: #f59e0b; /* Darker amber on hover */
+        }
+        .btn-hint.disabled {
+             background-color: #fcd34d; /* Lighter amber when disabled */
+             cursor: not-allowed;
+             opacity: 0.7;
+        }
+
+        .lyric-display {
+            background-color: #faf5ff; /* Very light purple */
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 2; /* Increase line height for inputs */
+            border: 1px solid #e9d5ff; /* Light purple border */
+        }
+        .lyric-input {
+            width: 100px; /* Fixed width for blanks */
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #c084fc; /* Purple border */
+            border-radius: 0.25rem;
+            margin: 0 0.25rem; /* Spacing around input */
+            font-size: 1rem; /* Match surrounding text */
+            background-color: white;
+        }
+        /* Style for inputs that are not disabled */
+        .lyric-input:not(:disabled) {
+             border: 1px solid #c084fc; /* Default border for active inputs */
+        }
+        .lyric-input.correct {
+            border-color: #22c55e; /* Green border for correct */
+            background-color: #f0fdf4;
+        }
+        .lyric-input.incorrect:not(:disabled) { /* Style incorrect, but editable fields */
+            border-color: #ef4444; /* Red border for incorrect */
+            background-color: #fef2f2;
+        }
+         /* Style for revealed answers */
+        .lyric-input.revealed {
+            border-color: #fbbf24; /* Amber border for revealed */
+            background-color: #fffbeb; /* Light yellow background */
+            color: #a16207; /* Darker yellow text */
+            font-style: italic;
+        }
+        .hearts-display {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            font-size: 1.2rem; /* Adjusted size for text */
+        }
+        .hearts-display .heart-icon {
+             color: #ef4444; /* Red heart icon */
+             font-size: 1.5rem; /* Keep icon size */
+             vertical-align: middle; /* Align icon with text */
+        }
+        .message-area {
+            text-align: center;
+            font-weight: bold;
+            min-height: 1.5em; /* Reserve space */
+            margin-top: 1rem;
+        }
+        .message-area.success {
+            color: #16a34a; /* Green text */
+        }
+        .message-area.error {
+            color: #dc2626; /* Red text */
+        }
+        .message-area.info {
+            color: #6b7280; /* Gray text */
+        }
+        /* Hide elements initially */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="game-container w-full">
+        <h1>Musical Theatre Lyric Recall</h1>
+
+        <div id="category-selection">
+            <h2>Choose a Time Period</h2>
+            <div class="text-center">
+                </div>
+        </div>
+
+        <div id="difficulty-selection" class="hidden">
+            <h2 id="difficulty-title">Choose Difficulty for <span id="selected-category-name"></span></h2>
+            <div class="text-center">
+                <button class="btn difficulty-btn" data-difficulty="easy">Easy</button>
+                <button class="btn difficulty-btn" data-difficulty="medium">Medium</button>
+                <button class="btn difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+        </div>
+
+        <div id="game-area" class="hidden">
+            <div id="hearts-display" class="hearts-display"></div>
+            <div id="song-info" class="text-center text-lg font-semibold mb-2 text-purple-700"></div>
+            <div id="lyric-display" class="lyric-display"></div>
+            <div class="text-center">
+                <button id="hint-button" class="btn btn-hint">Hint (-0.5 ❤️)</button>
+                <button id="check-button" class="btn">Check Answers</button>
+            </div>
+             <div id="message-area" class="message-area info">Fill in the blanks!</div>
+        </div>
+
+        <div id="end-game-area" class="hidden text-center">
+            <h2 id="end-game-title"></h2>
+            <p id="end-game-message" class="mb-4"></p>
+            <button id="play-again-button" class="btn">Play Again?</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const songData = {
+            "Golden Age (1940s-1950s)": [
+                { title: "Oh, What a Beautiful Mornin'", show: "Oklahoma!", lyricLine: "There's a bright golden haze on the meadow", blanks: { easy: ["golden"], medium: ["bright", "haze", "meadow"], hard: ["a", "bright", "golden", "haze", "on", "the", "meadow"] } },
+                { title: "Some Enchanted Evening", show: "South Pacific", lyricLine: "Some enchanted evening you may see a stranger", blanks: { easy: ["stranger"], medium: ["enchanted", "evening", "see"], hard: ["Some", "enchanted", "evening", "may", "see", "a", "stranger"] } },
+                { title: "Getting to Know You", show: "The King and I", lyricLine: "Getting to know you getting to know all about you", blanks: { easy: ["know"], medium: ["Getting", "know", "all"], hard: ["Getting", "to", "know", "you", "getting", "to", "know", "all", "about", "you"] } },
+                { title: "If I Loved You", show: "Carousel", lyricLine: "If I loved you time and again I would try to say", blanks: { easy: ["loved"], medium: ["time", "again", "say"], hard: ["If", "I", "loved", "you", "time", "and", "again", "I", "would", "try", "to", "say"] } },
+                { title: "I Could Have Danced All Night", show: "My Fair Lady", lyricLine: "I could have danced all night I could have danced all night", blanks: { easy: ["danced"], medium: ["could", "danced", "night"], hard: ["I", "could", "have", "danced", "all", "night", "I", "could", "have", "danced", "all", "night"] } }
+            ],
+            "Contemporary (1990s-Present)": [
+                { title: "Defying Gravity", show: "Wicked", lyricLine: "Something has changed within me something is not the same", blanks: { easy: ["changed"], medium: ["Something", "within", "same"], hard: ["Something", "has", "changed", "within", "me", "something", "not", "the", "same"] } },
+                { title: "My Shot", show: "Hamilton", lyricLine: "I am not throwing away my shot hey yo", blanks: { easy: ["shot"], medium: ["throwing", "away", "shot"], hard: ["am", "not", "throwing", "away", "my", "shot", "hey", "yo"] } },
+                { title: "Seasons of Love", show: "Rent", lyricLine: "Five hundred twenty five thousand six hundred minutes", blanks: { easy: ["minutes"], medium: ["thousand", "six", "hundred"], hard: ["Five", "hundred", "twenty", "five", "thousand", "six", "hundred", "minutes"] } },
+                { title: "Waving Through a Window", show: "Dear Evan Hansen", lyricLine: "On the outside always looking in will I ever be more than I've always been", blanks: { easy: ["looking"], medium: ["outside", "looking", "always"], hard: ["On", "the", "outside", "always", "looking", "in", "will", "I", "ever", "be", "more", "than", "I've", "always", "been"] } },
+                { title: "You Will Be Found", show: "Dear Evan Hansen", lyricLine: "Even when the dark comes crashing through when you need a friend to carry you", blanks: { easy: ["friend"], medium: ["dark", "crashing", "friend"], hard: ["Even", "when", "the", "dark", "comes", "crashing", "through", "when", "you", "need", "a", "friend", "to", "carry", "you"] } },
+                { title: "For Forever", show: "Dear Evan Hansen", lyricLine: "All we see is sky for forever we let the world pass by for forever", blanks: { easy: ["sky"], medium: ["world", "pass", "forever"], hard: ["All", "we", "see", "is", "sky", "for", "forever", "we", "let", "the", "world", "pass", "by", "for", "forever"] } }
+            ],
+             "Classic Rock Era (1960s-1980s)": [
+                { title: "Aquarius", show: "Hair", lyricLine: "When the moon is in the Seventh House and Jupiter aligns with Mars", blanks: { easy: ["moon"], medium: ["Seventh", "House", "Jupiter"], hard: ["When", "the", "moon", "is", "in", "the", "Seventh", "House", "and", "Jupiter", "aligns", "with", "Mars"] } },
+                { title: "Memory", show: "Cats", lyricLine: "Midnight not a sound from the pavement has the moon lost her memory", blanks: { easy: ["memory"], medium: ["Midnight", "sound", "pavement"], hard: ["Midnight", "not", "a", "sound", "from", "the", "pavement", "has", "the", "moon", "lost", "her", "memory"] } },
+                { title: "Don't Cry for Me Argentina", show: "Evita", lyricLine: "It won't be easy you'll think it strange when I try to explain how I feel", blanks: { easy: ["explain"], medium: ["easy", "strange", "explain"], hard: ["It", "won't", "be", "easy", "you'll", "think", "it", "strange", "when", "I", "try", "to", "explain", "how", "I", "feel"] } },
+                { title: "One Day More", show: "Les Misérables", lyricLine: "One day more another day another destiny this never ending road to Calvary", blanks: { easy: ["destiny"], medium: ["more", "day", "destiny"], hard: ["One", "day", "more", "another", "day", "another", "destiny", "this", "never", "ending", "road", "to", "Calvary"] } },
+                { title: "The Phantom of the Opera", show: "The Phantom of the Opera", lyricLine: "In sleep he sang to me in dreams he came that voice which calls to me", blanks: { easy: ["voice"], medium: ["sleep", "dreams", "voice"], hard: ["In", "sleep", "he", "sang", "to", "me", "in", "dreams", "he", "came", "that", "voice", "which", "calls", "to", "me"] } }
+            ]
+        };
+
+        // --- DOM Elements ---
+        const categorySelectionDiv = document.getElementById('category-selection');
+        const difficultySelectionDiv = document.getElementById('difficulty-selection');
+        const gameAreaDiv = document.getElementById('game-area');
+        const endGameAreaDiv = document.getElementById('end-game-area');
+        const categoryButtonContainer = categorySelectionDiv.querySelector('.text-center');
+        const difficultyTitle = document.getElementById('difficulty-title');
+        const selectedCategoryNameSpan = document.getElementById('selected-category-name');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        const heartsDisplayDiv = document.getElementById('hearts-display');
+        const songInfoDiv = document.getElementById('song-info');
+        const lyricDisplayDiv = document.getElementById('lyric-display');
+        const checkButton = document.getElementById('check-button');
+        const hintButton = document.getElementById('hint-button');
+        const messageArea = document.getElementById('message-area');
+        const endGameTitle = document.getElementById('end-game-title');
+        const endGameMessage = document.getElementById('end-game-message');
+        const playAgainButton = document.getElementById('play-again-button');
+
+        // --- Game State ---
+        let currentCategory = null;
+        let currentDifficulty = null;
+        let currentSong = null;
+        let currentWordsToGuess = [];
+        let remainingHearts = 5.0;
+        let maxHearts = 5.0;
+        let gameActive = false;
+        let songsInCurrentCategory = [];
+        const MAX_ATTEMPTS = 3; // *** Max incorrect attempts before reveal ***
+
+        // --- Initialization ---
+        function initializeGame() {
+            currentCategory = null;
+            currentDifficulty = null;
+            currentSong = null;
+            currentWordsToGuess = [];
+            remainingHearts = maxHearts;
+            gameActive = false;
+            songsInCurrentCategory = [];
+
+            categorySelectionDiv.classList.remove('hidden');
+            difficultySelectionDiv.classList.add('hidden');
+            gameAreaDiv.classList.add('hidden');
+            endGameAreaDiv.classList.add('hidden');
+            messageArea.textContent = 'Select a category to start!';
+            messageArea.className = 'message-area info';
+
+            categoryButtonContainer.innerHTML = '';
+            Object.keys(songData).forEach(categoryName => {
+                if (songData[categoryName] && songData[categoryName].length > 0) {
+                    const button = document.createElement('button');
+                    button.textContent = categoryName;
+                    button.classList.add('btn', 'category-btn');
+                    button.dataset.category = categoryName;
+                    button.addEventListener('click', handleCategorySelect);
+                    categoryButtonContainer.appendChild(button);
+                } else {
+                     console.warn(`Category "${categoryName}" has no songs defined. Skipping button.`);
+                }
+            });
+             checkButton.disabled = false;
+             checkButton.classList.remove('disabled');
+             hintButton.disabled = false;
+             hintButton.classList.remove('disabled');
+        }
+
+        // --- Event Handlers ---
+        function handleCategorySelect(event) {
+            currentCategory = event.target.dataset.category;
+            selectedCategoryNameSpan.textContent = currentCategory;
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            categorySelectionDiv.classList.add('hidden');
+            difficultySelectionDiv.classList.remove('hidden');
+            difficultyButtons.forEach(btn => btn.classList.remove('active'));
+            messageArea.textContent = 'Choose a difficulty level.';
+        }
+
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', handleDifficultySelect);
+        });
+
+        function handleDifficultySelect(event) {
+            currentDifficulty = event.target.dataset.difficulty;
+            difficultyButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            startGame();
+        }
+
+        checkButton.addEventListener('click', handleCheckAnswers);
+        hintButton.addEventListener('click', handleHintRequest);
+        playAgainButton.addEventListener('click', initializeGame);
+
+        // --- Game Logic ---
+        function startGame() {
+            gameActive = true;
+            remainingHearts = maxHearts;
+             if (!songData[currentCategory] || songData[currentCategory].length === 0) {
+                 console.error("No songs found for category:", currentCategory);
+                 messageArea.textContent = "Error: No songs available for this category.";
+                 messageArea.className = 'message-area error';
+                 return;
+             }
+             songsInCurrentCategory = [...songData[currentCategory]].filter(song => song.blanks && song.blanks[currentDifficulty]);
+             if (songsInCurrentCategory.length === 0) {
+                  console.error("No songs found for category/difficulty:", currentCategory, currentDifficulty);
+                 messageArea.textContent = `Error: No songs available for ${currentDifficulty} level in this category.`;
+                 messageArea.className = 'message-area error';
+                 return;
+             }
+
+            difficultySelectionDiv.classList.add('hidden');
+            gameAreaDiv.classList.remove('hidden');
+            endGameAreaDiv.classList.add('hidden');
+
+            loadNextSong();
+        }
+
+        function loadNextSong() {
+            if (songsInCurrentCategory.length === 0) {
+                winGame();
+                return;
+            }
+
+            const songIndex = Math.floor(Math.random() * songsInCurrentCategory.length);
+            currentSong = songsInCurrentCategory.splice(songIndex, 1)[0];
+
+            if (!currentSong.blanks || !currentSong.blanks[currentDifficulty]) {
+                console.error("Song is missing data for difficulty:", currentDifficulty, currentSong.title);
+                loadNextSong();
+                return;
+            }
+            currentWordsToGuess = currentSong.blanks[currentDifficulty];
+
+            updateHeartsDisplay();
+            displayLyrics(); // Display lyrics which now adds data-attempts
+            messageArea.textContent = 'Fill in the blanks!';
+            messageArea.className = 'message-area info';
+
+            checkButton.disabled = false;
+            checkButton.classList.remove('disabled');
+            updateHintButtonState();
+        }
+
+        function displayLyrics() {
+            songInfoDiv.textContent = `${currentSong.title} - from ${currentSong.show}`;
+            lyricDisplayDiv.innerHTML = '';
+
+            const words = currentSong.lyricLine.split(' ');
+            const wordsToBlank = Array.isArray(currentSong.blanks[currentDifficulty]) ? currentSong.blanks[currentDifficulty] : [];
+            let inputIndex = 0;
+            const blankUsageCount = {};
+
+            words.forEach(word => {
+                const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
+                let isBlank = false;
+
+                if (cleanWord && wordsToBlank.includes(cleanWord)) {
+                    blankUsageCount[cleanWord] = blankUsageCount[cleanWord] || 0;
+                    const neededCount = wordsToBlank.filter(w => w === cleanWord).length;
+                    if (blankUsageCount[cleanWord] < neededCount) {
+                        isBlank = true;
+                        blankUsageCount[cleanWord]++;
+                    }
+                }
+
+                if (isBlank) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.classList.add('lyric-input');
+                    input.dataset.answer = cleanWord;
+                    input.dataset.originalWord = word;
+                    input.setAttribute('aria-label', `Blank word ${inputIndex + 1}`);
+                    input.dataset.attempts = "0"; // *** Initialize attempts counter ***
+                    lyricDisplayDiv.appendChild(input);
+                    inputIndex++;
+                } else {
+                    const wordSpan = document.createElement('span');
+                    wordSpan.textContent = (lyricDisplayDiv.childNodes.length > 0 ? ' ' : '') + word;
+                    lyricDisplayDiv.appendChild(wordSpan);
+                }
+            });
+
+             wordsToBlank.forEach(blankWord => {
+                 if (!blankUsageCount[blankWord]) {
+                     console.warn(`Blank word "${blankWord}" for song "${currentSong.title}" was defined but not found in lyricLine: "${currentSong.lyricLine}"`);
+                 }
+             });
+        }
+
+        function updateHeartsDisplay() {
+             heartsDisplayDiv.innerHTML = `Hearts: ${remainingHearts} <span class="heart-icon">❤️</span>`;
+        }
+
+        function updateHintButtonState() {
+            if (!gameActive || remainingHearts < 0.5) {
+                hintButton.disabled = true;
+                hintButton.classList.add('disabled');
+            } else {
+                // Also disable if there are no more active blanks
+                const hasActiveBlanks = lyricDisplayDiv.querySelector('.lyric-input:not(:disabled)');
+                if (hasActiveBlanks) {
+                    hintButton.disabled = false;
+                    hintButton.classList.remove('disabled');
+                } else {
+                    hintButton.disabled = true;
+                    hintButton.classList.add('disabled');
+                }
+            }
+        }
+
+        function handleHintRequest() {
+            if (!gameActive || hintButton.disabled || remainingHearts < 0.5) {
+                return;
+            }
+
+            const firstBlankInput = lyricDisplayDiv.querySelector('.lyric-input:not(:disabled):not(.correct)');
+
+            if (firstBlankInput) {
+                remainingHearts -= 0.5;
+                updateHeartsDisplay();
+                messageArea.textContent = `Hint used! (-0.5 ❤️)`;
+                messageArea.className = 'message-area info';
+
+                const correctAnswer = firstBlankInput.dataset.answer;
+                if (correctAnswer && correctAnswer.length > 0) {
+                    firstBlankInput.value = correctAnswer[0];
+                }
+
+                if (remainingHearts <= 0) {
+                    gameOver();
+                } else {
+                    updateHintButtonState();
+                }
+
+            } else {
+                messageArea.textContent = "No more hints available for this line!";
+                messageArea.className = 'message-area info';
+                hintButton.disabled = true;
+                hintButton.classList.add('disabled');
+            }
+        }
+
+
+        // *** UPDATED Check Answers Function ***
+        function handleCheckAnswers() {
+            if (!gameActive || checkButton.disabled) return;
+
+            const inputsToCheck = lyricDisplayDiv.querySelectorAll('.lyric-input:not(:disabled)'); // Only check enabled inputs
+            let mistakesMadeThisCheck = 0;
+            let revealedWordsThisCheck = 0; // Track words revealed in this check
+
+            if (inputsToCheck.length === 0) {
+                 // This can happen if the user clicks check after all inputs are already disabled (correct or revealed)
+                 console.log("No enabled inputs to check.");
+                 // Check if the round is actually complete now
+                 const allInputs = lyricDisplayDiv.querySelectorAll('.lyric-input');
+                 const isRoundComplete = Array.from(allInputs).every(input => input.disabled); // Check if ALL are disabled
+                 if(isRoundComplete && gameActive){
+                     // If somehow check was clicked when round was already complete, proceed
+                     proceedToNextSong();
+                 }
+                 return;
+            }
+
+            inputsToCheck.forEach(input => {
+                const userAnswer = input.value.trim().toLowerCase().replace(/[.,!?;:]/g, '');
+                const correctAnswer = input.dataset.answer;
+
+                if (userAnswer === correctAnswer) {
+                    input.classList.remove('incorrect');
+                    input.classList.add('correct');
+                    input.disabled = true; // Lock correct answers
+                } else {
+                    // Incorrect Answer
+                    input.classList.remove('correct');
+                    input.classList.add('incorrect');
+                    mistakesMadeThisCheck++;
+
+                    // Increment attempts and check for reveal
+                    let currentAttempts = parseInt(input.dataset.attempts || "0", 10);
+                    currentAttempts++;
+                    input.dataset.attempts = currentAttempts; // Update attempts count
+
+                    if (currentAttempts >= MAX_ATTEMPTS) {
+                        // Reveal the word after 3 strikes
+                        input.value = input.dataset.answer; // Fill with correct answer
+                        input.classList.remove('incorrect');
+                        input.classList.add('revealed'); // Add 'revealed' class for styling
+                        input.disabled = true; // Disable the input
+                        revealedWordsThisCheck++;
+                        messageArea.textContent = `Word "${input.dataset.answer}" revealed after ${MAX_ATTEMPTS} misses.`; // Update message
+                        messageArea.className = 'message-area info'; // Use info class for reveal message
+                    }
+                }
+            });
+
+            // Deduct hearts for mistakes made in this check (before reveal)
+            if (mistakesMadeThisCheck > 0) {
+                remainingHearts -= mistakesMadeThisCheck; // Deduct 1 heart per mistake
+                remainingHearts = Math.max(0, remainingHearts);
+                updateHeartsDisplay();
+            }
+
+            // --- Post-Check Logic ---
+
+            // Check for Game Over FIRST
+            if (remainingHearts <= 0) {
+                gameOver();
+                return; // Stop further processing if game over
+            }
+
+            // Check if the round is now complete (all inputs disabled)
+            const allInputs = lyricDisplayDiv.querySelectorAll('.lyric-input');
+            const isRoundComplete = Array.from(allInputs).every(input => input.disabled);
+
+            if (isRoundComplete) {
+                // All blanks are filled (either correctly or revealed)
+                proceedToNextSong();
+            } else {
+                 // Round not complete, update message based on what happened
+                 if (mistakesMadeThisCheck > 0 && revealedWordsThisCheck === 0) {
+                     // Only mistakes, no reveals yet
+                     messageArea.textContent = `Keep trying! ${mistakesMadeThisCheck} mistake(s) found this time.`;
+                     messageArea.className = 'message-area error';
+                 } else if (mistakesMadeThisCheck === 0 && revealedWordsThisCheck === 0) {
+                     // This case shouldn't happen if inputsToCheck > 0, but as a fallback
+                     messageArea.textContent = `Keep trying! Fill in the remaining blanks.`;
+                      messageArea.className = 'message-area info';
+                 } else if (revealedWordsThisCheck > 0) {
+                     // If words were revealed, the message was already updated inside the loop.
+                     // We might add a summary message here if needed, but the individual reveal message is likely sufficient.
+                     // Example: messageArea.textContent = `${revealedWordsThisCheck} word(s) revealed. Keep going!`;
+                     // messageArea.className = 'message-area info';
+                 }
+                 // Update hint button state as available blanks might have changed
+                 updateHintButtonState();
+            }
+        }
+
+        // *** NEW Helper function to proceed to the next song ***
+        function proceedToNextSong() {
+             if (!gameActive) return; // Don't proceed if game isn't active
+
+             // Give feedback based on whether words were revealed
+             const wasAnyWordRevealed = lyricDisplayDiv.querySelector('.lyric-input.revealed');
+             if (wasAnyWordRevealed) {
+                 messageArea.textContent = 'Line complete (with some help)! Moving on...';
+                 messageArea.className = 'message-area info';
+             } else {
+                 messageArea.textContent = 'Correct!';
+                 messageArea.className = 'message-area success';
+             }
+
+            checkButton.disabled = true;
+            checkButton.classList.add('disabled');
+            hintButton.disabled = true;
+            hintButton.classList.add('disabled');
+            setTimeout(loadNextSong, 1500); // Load next song after a delay
+        }
+
+
+        function gameOver() {
+            gameActive = false;
+            checkButton.disabled = true;
+            checkButton.classList.add('disabled');
+            hintButton.disabled = true;
+            hintButton.classList.add('disabled');
+            gameAreaDiv.classList.add('hidden');
+            endGameAreaDiv.classList.remove('hidden');
+            endGameTitle.textContent = 'Game Over!';
+             const finalHearts = Math.max(0, remainingHearts);
+            endGameMessage.textContent = `You ran out of hearts (Final: ${finalHearts} ❤️)! Better luck next time.`;
+            messageArea.textContent = 'Game Over!';
+            messageArea.className = 'message-area error';
+            lyricDisplayDiv.querySelectorAll('.lyric-input').forEach(input => input.disabled = true);
+        }
+
+         function winGame() {
+            gameActive = false;
+            checkButton.disabled = true;
+            checkButton.classList.add('disabled');
+            hintButton.disabled = true;
+            hintButton.classList.add('disabled');
+            gameAreaDiv.classList.add('hidden');
+            endGameAreaDiv.classList.remove('hidden');
+            endGameTitle.textContent = 'Congratulations!';
+            endGameMessage.textContent = `You've successfully recalled all the lyrics for ${currentCategory} (${currentDifficulty}) with ${remainingHearts} ❤️ left!`;
+            messageArea.textContent = 'You Win!';
+            messageArea.className = 'message-area success';
+        }
+
+
+        // --- Start the process ---
+        window.onload = initializeGame;
+
+    </script>
+
+</body>
+</html>
+
